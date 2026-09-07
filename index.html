@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scheda Morgan — Log allenamenti</title>
+<style>
+  :root{
+    --bg:#121212;
+    --surface:#1c1c1c;
+    --surface2:#242424;
+    --line:#333;
+    --text:#F2F0EB;
+    --muted:#8f8f8a;
+    --accent:#D4FF3D;
+    --accent-dim:#8fae2b;
+    --danger:#FF5A4E;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:60px;
+  }
+  header{
+    padding:20px 16px 14px;
+    border-bottom:1px solid var(--line);
+    position:sticky;top:0;
+    background:var(--bg);
+    z-index:10;
+  }
+  h1{
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    font-size:22px;
+    letter-spacing:0.5px;
+    margin:0 0 2px;
+    text-transform:uppercase;
+  }
+  .sub{color:var(--muted);font-size:13px;margin:0;}
+  .tabs{display:flex;gap:8px;padding:14px 16px 0;}
+  .tab{
+    flex:1;
+    padding:10px 0;
+    text-align:center;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:8px;
+    font-family:'Oswald',sans-serif;
+    font-size:14px;
+    letter-spacing:0.3px;
+    color:var(--muted);
+    cursor:pointer;
+  }
+  .tab.active{
+    background:var(--accent);
+    color:#151800;
+    border-color:var(--accent);
+  }
+  .view{display:none;padding:16px;}
+  .view.active{display:block;}
+  .day-tabs{display:flex;gap:6px;margin-bottom:16px;}
+  .day-tab{
+    flex:1;
+    padding:8px 0;
+    text-align:center;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:8px;
+    font-size:13px;
+    color:var(--muted);
+    cursor:pointer;
+  }
+  .day-tab.active{
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+  .date-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .date-row label{font-size:13px;color:var(--muted);}
+  .date-row input[type=date]{
+    flex:1;
+    background:var(--surface);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:8px 10px;
+    border-radius:8px;
+    font-size:14px;
+  }
+  .week-select{
+    background:var(--surface);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:8px 10px;
+    border-radius:8px;
+    font-size:13px;
+  }
+  .exercise{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:10px;
+    margin-bottom:12px;
+    overflow:hidden;
+  }
+  .ex-head{
+    padding:12px 14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+    cursor:pointer;
+  }
+  .ex-name{font-size:15px;font-weight:600;margin:0 0 3px;}
+  .ex-target{font-size:12px;color:var(--accent-dim);font-family:'JetBrains Mono',monospace;}
+  .ex-note{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.4;}
+  .chev{color:var(--muted);font-size:18px;transition:transform .15s;}
+  .exercise.open .chev{transform:rotate(180deg);}
+  .ex-body{display:none;padding:0 14px 14px;}
+  .exercise.open .ex-body{display:block;}
+  .sets{display:flex;flex-direction:column;gap:8px;margin-bottom:8px;}
+  .set-row{display:flex;align-items:center;gap:8px;}
+  .set-num{width:20px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+  .set-row input{
+    flex:1;
+    background:var(--surface2);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:8px 10px;
+    border-radius:6px;
+    font-size:14px;
+    font-family:'JetBrains Mono',monospace;
+    width:0;
+  }
+  .set-row span{font-size:11px;color:var(--muted);width:24px;text-align:center;}
+  .set-row button{
+    background:none;
+    border:none;
+    color:var(--danger);
+    font-size:16px;
+    padding:4px 6px;
+    cursor:pointer;
+  }
+  .ex-actions{display:flex;gap:8px;margin-top:4px;}
+  .ex-actions button{
+    flex:1;
+    padding:8px 0;
+    border-radius:6px;
+    border:1px solid var(--line);
+    background:var(--surface2);
+    color:var(--muted);
+    font-size:13px;
+    cursor:pointer;
+  }
+  .last-time{
+    font-size:11px;
+    color:var(--muted);
+    margin-top:8px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .save-bar{
+    position:fixed;
+    bottom:0;left:0;right:0;
+    padding:12px 16px;
+    background:var(--bg);
+    border-top:1px solid var(--line);
+  }
+  .save-btn{
+    width:100%;
+    padding:14px 0;
+    background:var(--accent);
+    color:#151800;
+    border:none;
+    border-radius:10px;
+    font-family:'Oswald',sans-serif;
+    font-size:15px;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    cursor:pointer;
+  }
+  .save-btn:active{opacity:0.85;}
+  .toast{
+    position:fixed;
+    bottom:80px;left:50%;
+    transform:translateX(-50%);
+    background:var(--accent);
+    color:#151800;
+    padding:10px 18px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:600;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s;
+  }
+  .toast.show{opacity:1;}
+  .history-item{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:10px;
+    margin-bottom:10px;
+    padding:12px 14px;
+  }
+  .history-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:8px;
+  }
+  .history-date{font-family:'Oswald',sans-serif;font-size:15px;letter-spacing:0.3px;}
+  .history-day{font-size:12px;color:var(--accent-dim);}
+  .history-ex{font-size:13px;margin-bottom:4px;}
+  .history-ex b{color:var(--text);}
+  .history-ex span{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:12px;}
+  .del-session{
+    background:none;border:none;color:var(--danger);font-size:12px;cursor:pointer;
+  }
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:40px 20px;}
+  .loading{color:var(--muted);font-size:13px;text-align:center;padding:40px 20px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Morgan — Log allenamenti</h1>
+  <p class="sub">Blocco 07/09 → 04/10/2026</p>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-tab="log">Registra</div>
+  <div class="tab" data-tab="history">Storico</div>
+</div>
+
+<div id="loading" class="loading">Caricamento dati...</div>
+
+<div class="view active" id="view-log" style="display:none;">
+  <div class="day-tabs">
+    <div class="day-tab active" data-day="1">Giorno 1</div>
+    <div class="day-tab" data-day="2">Giorno 2</div>
+    <div class="day-tab" data-day="3">Giorno 3</div>
+  </div>
+  <div class="date-row">
+    <div>
+      <div id="today-display" style="font-size:15px;font-weight:600;"></div>
+      <div id="week-display" style="font-size:12px;color:var(--muted);margin-top:2px;"></div>
+    </div>
+  </div>
+  <div id="exercise-list"></div>
+</div>
+
+<div class="view" id="view-history">
+  <div id="history-list"></div>
+</div>
+
+<div class="save-bar">
+  <button class="save-btn" id="save-btn">Salva allenamento</button>
+</div>
+<div class="toast" id="toast">Allenamento salvato</div>
+
+<script>
+const DATA = {
+  1: [
+    {name:"Rematore con bilanciere", target:{1:"4x10-12",2:"Ramp 12",3:"-10% 3x12",4:"-10% 3x12"}, note:"Usa straps, presa prona, oscilla il meno possibile, tira forte dai gomiti"},
+    {name:"Lat machine presa ergonomica", target:{1:"3x10-12",2:"1x10-12 2xmax",3:"2x8-10",4:"1xmax 1x10-12 2xmax"}, note:"Abbassa bene le scapole e le spalle"},
+    {name:"Rematore singolo con manubrio", target:{1:"3x12-20",2:"3x12-20",3:"3x12-20",4:"3x12-20"}, note:"Movimento completo, focus scapole e spalle basse in massima contrazione."},
+    {name:"Curl con bilanciere EZ (presa stretta)", target:{1:"3x10-12 ramping12",2:"3x8 ramping10",3:"4x6 ramping12",4:"4x8"}, note:"Stai in appoggio per non oscillare, presa stretta"},
+    {name:"Curl con corda al cavo basso", target:{1:"1x15-20",2:"2xmax",3:"2xmax",4:"2xmax"}, note:"Full rom, allunga bene soprattutto in basso."},
+    {name:"Pressa a 45°", target:{1:"4x8-12 Ramping12",2:"-15% 4x12",3:"5x8 peso sett3",4:"EMOM 2'"}, note:"Focus sul quadricipite"},
+    {name:"Iperestensioni", target:{1:"3x10-12",2:"4x10-12",3:"4x10-12",4:"4x10-12"}, note:"Movimento completo soprattutto in estensione"},
+    {name:"Addome: crunch + hollow hold", target:{1:"Crunch 15 rep + hollow hold max tempo",2:"Crunch 15 rep + hollow hold max tempo",3:"Crunch 15 rep + hollow hold max tempo",4:"Crunch 15 rep + hollow hold max tempo"}, note:"Recupero 1'. Fai 3-4 giri. I crunch puoi zavorrarli"}
+  ],
+  2: [
+    {name:"Panca inclinata con bilanciere 45°", target:{1:"3x8-12",2:"5x8-12 Ramp 8-12 -15%",3:"3x12 Ramp 12-15 -15%",4:"2x15"}, note:"Full rom. Prendi aria prima di ogni rep. Non chiudere troppo i gomiti in discesa."},
+    {name:"Piegamenti", target:{1:"1xmax",2:"1 giro myo rep 30% rep, 15'' rec.",3:"1xmax",4:"2 giri myo rep 30% rep, 15'' rec."}, note:"Usa maniglie"},
+    {name:"Pec fly", target:{1:"1x8-10 blocco contrazione",2:"2xmax no blocco",3:"1x15-20",4:"2xmax"}, note:"Petto in fuori per tutta l'esecuzione."},
+    {name:"Addome: crunch + hollow hold", target:{1:"Crunch 15 rep + hollow hold max tempo",2:"Crunch 15 rep + hollow hold max tempo",3:"Crunch 15 rep + hollow hold max tempo",4:"Crunch 15 rep + hollow hold max tempo"}, note:"Recupero 1'. Fai 3-4 giri."},
+    {name:"French press manubri", target:{1:"4x8-12",2:"4x piramidale 15-8",3:"4x piramidale 15-8",4:"4x piramidale 15-8"}, note:"Tocca manubrio con spalla in discesa, gomito ben dritto."},
+    {name:"Push down corda", target:{1:"1x15-20",2:"3xmax rec. 1'",3:"3xmax rec. 1'",4:"3xmax rec. 1'"}, note:"Stendi completamente le braccia sempre."}
+  ],
+  3: [
+    {name:"Stacco rumeno", target:{1:"5x5-8",2:"5x5-8",3:"5x5-8",4:"5x5-8"}, note:"Schema fisso 5x5-8 tutte le settimane: aumenta solo il carico di settimana in settimana (5-10kg totali a settimana), pesante ma gestibile."},
+    {name:"Leg extension", target:{1:"3x10-12",2:"3x10-12",3:"3x10-12",4:"3x10-12"}, note:"Cedimento ad ogni serie. No blocchi strani."},
+    {name:"Plank zavorrato", target:{1:"1x30-40'' peso nuovo",2:"3x45''-1' alla morte",3:"3x45''-1' alla morte",4:"3x45''-1' alla morte"}, note:"Carico fisso, aumenta di settimana in settimana."},
+    {name:"Spinte su panca piana con manubri", target:{1:"4x10-15",2:"1x10-15 2xmax",3:"1x15-20",4:"1x10-15 2xmax"}, note:"Movimento completo, recupero fisso 2'."},
+    {name:"Pulley con sbarra presa prona", target:{1:"1x12-15 poi stesso peso 2xmax",2:"1x10-12 poi stesso peso 1xmax",3:"1x10-12 poi stesso peso 1xmax",4:"1x10-12 poi stesso peso 1xmax"}, note:"Focus scapolare in negativa. Scapole sempre basse."},
+    {name:"Lat machine con triangolo", target:{1:"3x12-15",2:"1x12-15 2xmax",3:"3x8-10",4:"3x8-10"}, note:"Leggero blocco in massima contrazione"},
+    {name:"Curl manubri a martello", target:{1:"3x12-15",2:"4x piramidale 20-10",3:"4x piramidale 20-10",4:"4x piramidale 20-10"}, note:"Non oscillare, gomito fermo"},
+    {name:"Pushdown con sbarra", target:{1:"2x6-8, 2x10-12",2:"1x6-8, 2x8-12, 1x12-15",3:"2x6-8, 2x10-12",4:"1x6-8, 2x8-12, 1x12-15"}, note:"Non scappare in massima contrazione. Sett. 3 ripete sett. 1, sett. 4 ripete sett. 2."}
+  ]
+};
+
+const PROGRAM_START = new Date('2026-09-07T00:00:00');
+const PROGRAM_END = new Date('2026-10-04T00:00:00');
+
+function computeWeek(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  const diffDays = Math.floor((d - PROGRAM_START) / 86400000);
+  let week = Math.floor(diffDays / 7) + 1;
+  if(week < 1) week = 1;
+  if(week > 4) week = 4;
+  return week;
+}
+
+let state = { currentDay: 1, sessions: [] };
+
+function todayStr(){
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+
+async function loadData(){
+  try{
+    const res = await window.storage.get('morgan_sessions', false);
+    state.sessions = res ? JSON.parse(res.value) : [];
+  }catch(e){
+    state.sessions = [];
+  }
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('view-log').style.display = 'block';
+  renderExercises();
+  renderHistory();
+}
+
+function guessLastEntry(exName){
+  for(let i = state.sessions.length - 1; i >= 0; i--){
+    const s = state.sessions[i];
+    if(s.day == state.currentDay && s.entries[exName]){
+      return {date:s.date, sets:s.entries[exName]};
+    }
+  }
+  return null;
+}
+
+function currentWeek(){
+  return computeWeek(todayStr());
+}
+
+const MONTHS_IT = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
+const DAYS_IT = ['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato'];
+
+function updateWeekDisplay(){
+  const now = new Date();
+  const dayName = DAYS_IT[now.getDay()];
+  const monthName = MONTHS_IT[now.getMonth()];
+  document.getElementById('today-display').textContent = `${dayName} ${now.getDate()} ${monthName} ${now.getFullYear()}`;
+  document.getElementById('week-display').textContent = 'Settimana ' + currentWeek() + ' di 4';
+}
+
+function renderExercises(){
+  const list = document.getElementById('exercise-list');
+  list.innerHTML = '';
+  updateWeekDisplay();
+  const week = currentWeek();
+  DATA[state.currentDay].forEach((ex, idx) => {
+    const div = document.createElement('div');
+    div.className = 'exercise';
+    div.dataset.exname = ex.name;
+    const last = guessLastEntry(ex.name);
+    const lastHtml = last ? `<div class="last-time">Ultima volta (${last.date}): ${last.sets.map(s=>`${s.weight||'-'}kg x${s.reps||'-'}`).join(', ')}</div>` : '';
+    div.innerHTML = `
+      <div class="ex-head" onclick="toggleExercise(this)">
+        <div>
+          <p class="ex-name">${ex.name}</p>
+          <p class="ex-target">${ex.target[week] || ''}</p>
+          <p class="ex-note">${ex.note}</p>
+        </div>
+        <span class="chev">&#9660;</span>
+      </div>
+      <div class="ex-body">
+        <div class="sets" id="sets-${idx}"></div>
+        <div class="ex-actions">
+          <button type="button" onclick="addSet(${idx})">+ Aggiungi serie</button>
+        </div>
+        ${lastHtml}
+      </div>
+    `;
+    list.appendChild(div);
+    for(let i=0;i<3;i++) addSet(idx, false);
+  });
+}
+
+function toggleExercise(headEl){
+  headEl.parentElement.classList.toggle('open');
+}
+
+function addSet(idx, scroll){
+  const container = document.getElementById(`sets-${idx}`);
+  const n = container.children.length + 1;
+  const row = document.createElement('div');
+  row.className = 'set-row';
+  row.innerHTML = `
+    <span class="set-num">${n}</span>
+    <input type="number" inputmode="decimal" placeholder="peso" step="0.5">
+    <span>kg</span>
+    <input type="number" inputmode="numeric" placeholder="rep">
+    <span>rep</span>
+    <button type="button" onclick="removeSet(this, ${idx})">&times;</button>
+  `;
+  container.appendChild(row);
+}
+
+function removeSet(btn, idx){
+  const row = btn.parentElement;
+  row.remove();
+  const container = document.getElementById(`sets-${idx}`);
+  Array.from(container.children).forEach((r,i)=>{
+    r.querySelector('.set-num').textContent = i+1;
+  });
+}
+
+function collectEntries(){
+  const entries = {};
+  document.querySelectorAll('#exercise-list .exercise').forEach((exDiv, idx)=>{
+    const name = exDiv.dataset.exname;
+    const rows = exDiv.querySelectorAll('.set-row');
+    const sets = [];
+    rows.forEach(r=>{
+      const inputs = r.querySelectorAll('input');
+      const weight = inputs[0].value;
+      const reps = inputs[1].value;
+      if(weight !== '' || reps !== ''){
+        sets.push({weight: weight || null, reps: reps || null});
+      }
+    });
+    if(sets.length > 0) entries[name] = sets;
+  });
+  return entries;
+}
+
+async function saveSession(){
+  const date = todayStr();
+  const week = currentWeek();
+  const entries = collectEntries();
+  if(Object.keys(entries).length === 0){
+    showToast('Inserisci almeno un dato prima di salvare');
+    return;
+  }
+  const session = {
+    id: 'sess_' + Date.now(),
+    date,
+    week,
+    day: state.currentDay,
+    entries
+  };
+  state.sessions.push(session);
+  try{
+    await window.storage.set('morgan_sessions', JSON.stringify(state.sessions), false);
+    showToast('Allenamento salvato');
+    renderExercises();
+    renderHistory();
+  }catch(e){
+    showToast('Errore nel salvataggio, riprova');
+    state.sessions.pop();
+  }
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+function renderHistory(){
+  const list = document.getElementById('history-list');
+  if(state.sessions.length === 0){
+    list.innerHTML = '<div class="empty">Nessun allenamento registrato ancora.<br>Vai su "Registra" per iniziare.</div>';
+    return;
+  }
+  const sorted = [...state.sessions].sort((a,b)=> b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+  list.innerHTML = '';
+  sorted.forEach(s=>{
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    const exHtml = Object.entries(s.entries).map(([name, sets])=>{
+      const setsStr = sets.map(x=>`${x.weight||'-'}kg&times;${x.reps||'-'}`).join(', ');
+      return `<div class="history-ex"><b>${name}:</b> <span>${setsStr}</span></div>`;
+    }).join('');
+    div.innerHTML = `
+      <div class="history-head">
+        <div>
+          <div class="history-date">${formatDate(s.date)}</div>
+          <div class="history-day">Giorno ${s.day} · Sett. ${s.week}</div>
+        </div>
+        <button class="del-session" onclick="deleteSession('${s.id}')">Elimina</button>
+      </div>
+      ${exHtml}
+    `;
+    list.appendChild(div);
+  });
+}
+
+function formatDate(iso){
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+async function deleteSession(id){
+  state.sessions = state.sessions.filter(s => s.id !== id);
+  try{
+    await window.storage.set('morgan_sessions', JSON.stringify(state.sessions), false);
+    renderHistory();
+  }catch(e){
+    showToast('Errore nell\'eliminazione');
+  }
+}
+
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const target = tab.dataset.tab;
+    document.getElementById('view-log').classList.toggle('active', target==='log');
+    document.getElementById('view-history').classList.toggle('active', target==='history');
+    document.getElementById('view-log').style.display = target==='log' ? 'block':'none';
+    document.getElementById('view-history').style.display = target==='history' ? 'block':'none';
+  });
+});
+
+document.querySelectorAll('.day-tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.day-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    state.currentDay = parseInt(tab.dataset.day);
+    renderExercises();
+  });
+});
+
+document.getElementById('save-btn').addEventListener('click', saveSession);
+
+loadData();
+</script>
+</body>
+</html>
