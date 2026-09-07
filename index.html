@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#121212">
 <title>Scheda Morgan — Log allenamenti</title>
 <style>
   :root{
@@ -316,8 +318,8 @@ function todayStr(){
 
 async function loadData(){
   try{
-    const res = await window.storage.get('morgan_sessions', false);
-    state.sessions = res ? JSON.parse(res.value) : [];
+    const raw = localStorage.getItem('morgan_sessions');
+    state.sessions = raw ? JSON.parse(raw) : [];
   }catch(e){
     state.sessions = [];
   }
@@ -450,7 +452,7 @@ async function saveSession(){
   };
   state.sessions.push(session);
   try{
-    await window.storage.set('morgan_sessions', JSON.stringify(state.sessions), false);
+    localStorage.setItem('morgan_sessions', JSON.stringify(state.sessions));
     showToast('Allenamento salvato');
     renderExercises();
     renderHistory();
@@ -504,7 +506,7 @@ function formatDate(iso){
 async function deleteSession(id){
   state.sessions = state.sessions.filter(s => s.id !== id);
   try{
-    await window.storage.set('morgan_sessions', JSON.stringify(state.sessions), false);
+    localStorage.setItem('morgan_sessions', JSON.stringify(state.sessions));
     renderHistory();
   }catch(e){
     showToast('Errore nell\'eliminazione');
